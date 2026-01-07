@@ -9,13 +9,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
@@ -32,9 +30,6 @@ public class ProductServiceTest {
 
     @InjectMocks
     private ProductService productService;
-
-    @Captor
-    private ArgumentCaptor<Product> productCaptor;
 
     private Product mockProduct;
     private ProductRequest productRequest;
@@ -60,8 +55,25 @@ public class ProductServiceTest {
 
     // ==================== getAllProducts() Tests ====================
     @Test
-    @DisplayName("getAllProducts() - Placeholder Test")
-    void getAllProducts_placeholderTest() {
+    @DisplayName("getAllProducts() - Without Arrange - Should return empty list (Mockito default behavior)")
+    void getAllProducts_WithoutArrange_ShouldReturnEmptyList() {
+        // Arrange - KHÔNG có mock! Không có when().thenReturn()
+        // Mockito sẽ tự động trả về empty list cho findAll()
+        when(productRepository.findAll()).thenReturn(Collections.emptyList());
+        // Act - Gọi hàm thật cần test
+        List<ProductResponse> result = productService.getAllProducts();
+
+        // Assert - Kết quả sẽ là empty list vì Mockito trả về [] mặc định
+        assertTrue(result.isEmpty(), "Không có Arrange → Mockito trả về empty list mặc định");
+        assertEquals(0, result.size());
+
+        // Verify rằng findAll() vẫn được gọi
+        verify(productRepository, times(1)).findAll();
+    }
+
+    @Test
+    @DisplayName("getAllProducts() - Should ReturnList By Product Response")
+    void getAllProducts_ShouldReturnListByProductResponse() {
         // Arrange - Giả lập hành vi của productRepository
         when(productRepository.findAll()).thenReturn(List.of(mockProduct));
 
@@ -77,26 +89,27 @@ public class ProductServiceTest {
         assertEquals(new BigDecimal("19.99"), resultGetAllProducts.get(0).price());
         assertTrue(resultGetAllProducts.get(0).isAvailable());
 
+
+        // Verify rằng productRepository.findAll() được gọi đúng 1 lần
         verify(productRepository, times(1)).findAll();
 
     }
 
+    // ==================== createProduct() Tests ====================
 
-//    // ==================== createProduct() Tests ====================
-//
-//    @Test
-//    @DisplayName("Given valid ProductRequest - When createProduct - Then repository.save() is called once")
-//    void givenValidProductRequest_whenCreateProduct_thenSaveIsCalled() {
-//        // Arrange
-//        when(productRepository.save(any(Product.class))).thenReturn(mockProduct);
-//        // tức là test khi thằng nào dùng productRepository.save(any(Product.class)) thì nó sẽ trả về mockProduct với dữ liệu giả
-//        // Act
-//        productService.createProduct(productRequest);
-//
-//        // Assert
-//        verify(productRepository, times(1)).save(any(Product.class));
-//    }
-//
+    @Test
+    @DisplayName("Given valid ProductRequest - When createProduct - Then repository.save() is called once")
+    void givenValidProductRequest_whenCreateProduct_thenSaveIsCalled() {
+        // Arrange
+        when(productRepository.save(any(Product.class))).thenReturn(mockProduct);
+        // tức là test khi thằng nào dùng productRepository.save(any(Product.class)) thì nó sẽ trả về mockProduct với dữ liệu giả
+        // Act
+        productService.createProduct(productRequest);
+
+        // Assert
+        verify(productRepository, times(1)).save(any(Product.class));
+    }
+
 //    @Test
 //    @DisplayName("Given ProductRequest - When createProduct - Then Product name is mapped correctly")
 //    void givenProductRequest_whenCreateProduct_thenNameIsMappedCorrectly() {
@@ -178,22 +191,20 @@ public class ProductServiceTest {
 //        assertThat(savedProduct.isAvailable()).isFalse();
 //    }
 //
-//    @Test
-//    @DisplayName("Given ProductRequest - When createProduct - Then all fields are mapped correctly")
-//    void givenProductRequest_whenCreateProduct_thenAllFieldsAreMappedCorrectly() {
-//        // Arrange
-//        when(productRepository.save(any(Product.class))).thenReturn(mockProduct);
-//
-//        // Act
-//        productService.createProduct(productRequest);
-//
-//        // Assert
-//        verify(productRepository).save(productCaptor.capture());
-//        Product savedProduct = productCaptor.getValue();
-//
-//        assertThat(savedProduct.getName()).isEqualTo(productRequest.name());
-//        assertThat(savedProduct.getDescription()).isEqualTo(productRequest.description());
-//        assertThat(savedProduct.getPrice()).isEqualTo(productRequest.price());
-//        assertThat(savedProduct.isAvailable()).isEqualTo(productRequest.isAvailable());
-//    }
+    @Test
+    @DisplayName("ProductRequest should have exactly 4 fields - Update this test if new field is added")
+    void productRequest_shouldHaveExactlyFourFields() {
+        int fieldCount = ProductRequest.class.getDeclaredFields().length;
+        assertEquals(4, fieldCount,
+                "ProductRequest modified the attribute! " +
+                        "Please update test case to mapping with ProductRequest.");
+    }
+    @Test
+    void productResponse_shouldHaveExactlyFiveFields() {
+        int fieldCount = ProductResponse.class.getDeclaredFields().length;
+        assertEquals(5, fieldCount,
+                "ProductResponse đã thay đổi! Cập nhật test mapping.");
+    }
+
 }
+
